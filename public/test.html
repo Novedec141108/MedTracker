@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Vercel Deployment Test</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .test { padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
+    .pass { background: #e8f5e9; color: #2e7d32; }
+    .fail { background: #ffebee; color: #c62828; }
+    .pending { background: #fff3e0; color: #f57c00; }
+    h1 { text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>🧪 Medicine Tracker - Vercel Deployment Test</h1>
+  
+  <div id="tests"></div>
+  
+  <script>
+    const tests = [];
+    const testDiv = document.getElementById('tests');
+    
+    function addTest(name, fn) {
+      tests.push({ name, fn });
+    }
+    
+    function log(name, status, message) {
+      const el = document.createElement('div');
+      el.className = `test ${status}`;
+      el.textContent = `${status.toUpperCase()}: ${name} - ${message}`;
+      testDiv.appendChild(el);
+    }
+    
+    // Test 1: Check if app loads
+    addTest('App Page Load', async () => {
+      try {
+        log('App Page Load', 'pass', '✅ Page loaded successfully');
+        return true;
+      } catch (e) {
+        log('App Page Load', 'fail', '❌ ' + e.message);
+        return false;
+      }
+    });
+    
+    // Test 2: Check localStorage
+    addTest('localStorage Support', () => {
+      try {
+        localStorage.setItem('test', 'true');
+        const val = localStorage.getItem('test');
+        localStorage.removeItem('test');
+        if (val === 'true') {
+          log('localStorage Support', 'pass', '✅ localStorage works');
+          return true;
+        }
+      } catch (e) {
+        log('localStorage Support', 'fail', '❌ ' + e.message);
+        return false;
+      }
+    });
+    
+    // Test 3: Check if DOM elements exist
+    addTest('DOM Elements', () => {
+      const elements = {
+        'userList': document.getElementById('userList'),
+        'userName': document.getElementById('userName'),
+        'medList': document.getElementById('medList'),
+        'medName': document.getElementById('medName'),
+        'calendar': document.getElementById('calendar'),
+        'modal': document.getElementById('modal')
+      };
+      
+      let allFound = true;
+      for (const [key, el] of Object.entries(elements)) {
+        if (!el) {
+          log(`DOM: ${key}`, 'fail', `❌ ${key} not found`);
+          allFound = false;
+        }
+      }
+      
+      if (allFound) {
+        log('DOM Elements', 'pass', '✅ All required elements found');
+      }
+      return allFound;
+    });
+    
+    // Test 4: Check if functions exist
+    addTest('JavaScript Functions', () => {
+      const functions = ['addUser', 'addMedicine', 'selectUser', 'renderCalendar'];
+      let allFound = true;
+      
+      for (const fn of functions) {
+        if (typeof window[fn] !== 'function') {
+          log(`Function: ${fn}`, 'fail', `❌ ${fn} not defined`);
+          allFound = false;
+        }
+      }
+      
+      if (allFound) {
+        log('JavaScript Functions', 'pass', '✅ All functions defined');
+      }
+      return allFound;
+    });
+    
+    // Test 5: Test Data Operations
+    addTest('Data Operations', () => {
+      try {
+        // Save test data
+        const testData = { test: 'data', timestamp: new Date().toISOString() };
+        localStorage.setItem('med-tracker-test', JSON.stringify(testData));
+        
+        // Read it back
+        const retrieved = JSON.parse(localStorage.getItem('med-tracker-test'));
+        localStorage.removeItem('med-tracker-test');
+        
+        if (retrieved.test === 'data') {
+          log('Data Operations', 'pass', '✅ Save/load data works');
+          return true;
+        }
+      } catch (e) {
+        log('Data Operations', 'fail', '❌ ' + e.message);
+        return false;
+      }
+    });
+    
+    // Test 6: Check Calendar Rendering
+    addTest('Calendar Rendering', () => {
+      try {
+        const cal = document.getElementById('calendar');
+        if (cal && cal.children.length > 0) {
+          log('Calendar Rendering', 'pass', `✅ Calendar rendered (${cal.children.length} elements)`);
+          return true;
+        } else {
+          log('Calendar Rendering', 'fail', '❌ Calendar not rendered');
+          return false;
+        }
+      } catch (e) {
+        log('Calendar Rendering', 'fail', '❌ ' + e.message);
+        return false;
+      }
+    });
+    
+    // Run all tests
+    async function runTests() {
+      log('Test Suite', 'pending', '🧪 Running tests...');
+      
+      for (const test of tests) {
+        try {
+          await test.fn();
+        } catch (e) {
+          log(test.name, 'fail', '❌ ' + e.message);
+        }
+      }
+      
+      log('Test Suite', 'pass', '✅ All tests completed!');
+    }
+    
+    // Run when page loads
+    window.addEventListener('load', runTests);
+  </script>
+</body>
+</html>

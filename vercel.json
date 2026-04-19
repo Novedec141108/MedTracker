@@ -1,12 +1,29 @@
 {
   "version": 2,
-  "public": "public",
+  "public": true,
   "buildCommand": "echo 'Static site'",
   "outputDirectory": "public",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "routes": [
+    {
+      "src": "/index.html",
+      "dest": "/index.html"
+    },
     {
       "src": "/(.*)",
       "dest": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
     }
   ]
 }
