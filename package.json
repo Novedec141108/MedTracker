@@ -1,8 +1,8 @@
-{
+    {
   "name": "medicine-tracker",
   "version": "1.0.0",
   "description": "Daily medicine tracker with email reminders",
-  "main": "server.js",
+  "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.js",
