@@ -1,5 +1,7 @@
 {
+  "buildCommand": "echo 'Static site'",
+  "outputDirectory": "public",
   "rewrites": [
-    { "source": "/(?!.*\\.html$|.*\\.json$|.*\\.js$|.*\\.css$|_redirects)", "destination": "/index.html" }
+    { "source": "/", "destination": "/index.html" }
   ]
 }
