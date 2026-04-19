@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Medicine Tracker - Diagnostic</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; background: #1e1e1e; color: #00ff00; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #ffff00; margin-bottom: 20px; }
+    .log-box { background: #000; border: 1px solid #00ff00; padding: 15px; border-radius: 4px; margin: 10px 0; }
+    .info { color: #00ffff; }
+    .error { color: #ff0000; }
+    .success { color: #00ff00; }
+    .warning { color: #ffff00; }
+    pre { overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+    button { padding: 8px 12px; background: #00ff00; color: #000; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+    button:hover { background: #00cc00; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Medicine Tracker - Diagnostic Log</h1>
+    
+    <div class="log-box">
+      <h2 class="info">📋 Environment Info</h2>
+      <pre id="envInfo"></pre>
+    </div>
+
+    <div class="log-box">
+      <h2 class="info">🔗 Network Requests</h2>
+      <pre id="networkLog"></pre>
+      <button onclick="testFetch()">Test Fetch</button>
+      <button onclick="downloadLog()">Download Log</button>
+    </div>
+
+    <div class="log-box">
+      <h2 class="info">💾 Local Storage</h2>
+      <pre id="storageLog"></pre>
+    </div>
+
+    <div class="log-box">
+      <h2 class="info">✅ App Status</h2>
+      <pre id="appStatus"></pre>
+    </div>
+  </div>
+
+  <script>
+    const logs = [];
+    
+    function addLog(type, message, data = null) {
+      const timestamp = new Date().toISOString();
+      const logEntry = {
+        timestamp,
+        type,
+        message,
+        data
+      };
+      logs.push(logEntry);
+      
+      let logText = `[${timestamp}] ${type}: ${message}`;
+      if (data) logText += `\n${JSON.stringify(data, null, 2)}`;
+      
+      document.getElementById('networkLog').textContent += logText + '\n\n';
+    }
+
+    // Log environment
+    function logEnv() {
+      const env = {
+        url: window.location.href,
+        origin: window.location.origin,
+        pathname: window.location.pathname,
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        onLine: navigator.onLine,
+        timestamp: new Date().toISOString()
+      };
+      document.getElementById('envInfo').textContent = JSON.stringify(env, null, 2);
+      addLog('ENV', 'Environment logged', env);
+    }
+
+    // Intercept fetch
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      const [url, options] = args;
+      addLog('FETCH_REQUEST', `URL: ${url}`, { url, options, method: options?.method || 'GET' });
+      
+      return originalFetch.apply(this, args)
+        .then(response => {
+          addLog('FETCH_RESPONSE', `Status: ${response.status}`, {
+            url,
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers)
+          });
+          return response;
+        })
+        .catch(error => {
+          addLog('FETCH_ERROR', error.message, { url, error: error.toString() });
+          throw error;
+        });
+    };
+
+    // Log storage
+    function logStorage() {
+      const storage = {};
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          try {
+            storage[key] = JSON.parse(localStorage[key]);
+          } catch (e) {
+            storage[key] = localStorage[key];
+          }
+        }
+      }
+      document.getElementById('storageLog').textContent = JSON.stringify(storage, null, 2) || 'Empty';
+      addLog('STORAGE', 'Storage logged', storage);
+    }
+
+    // Test fetch
+    function testFetch() {
+      addLog('TEST', 'Testing fetch to current origin');
+      fetch(window.location.origin)
+        .then(r => r.text())
+        .then(text => addLog('TEST_SUCCESS', 'Fetch succeeded', { length: text.length }))
+        .catch(e => addLog('TEST_ERROR', e.message));
+    }
+
+    // App status
+    function logAppStatus() {
+      const status = {
+        DOMarker_userList: !!document.getElementById('userList'),
+        DOMarker_calendar: !!document.getElementById('calendar'),
+        DOMarker_modal: !!document.getElementById('modal'),
+        functionArker_addUser: typeof window.addUser === 'function',
+        functionArker_renderCalendar: typeof window.renderCalendar === 'function',
+        localStorageAvailable: (() => { try { localStorage.setItem('test', 'test'); localStorage.removeItem('test'); return true; } catch { return false; } })(),
+        timestamp: new Date().toISOString()
+      };
+      document.getElementById('appStatus').textContent = JSON.stringify(status, null, 2);
+      addLog('APP_STATUS', 'App status checked', status);
+    }
+
+    // Download log
+    function downloadLog() {
+      const logData = {
+        generated: new Date().toISOString(),
+        url: window.location.href,
+        logs: logs
+      };
+      const json = JSON.stringify(logData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `medicine-tracker-diagnostic-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      addLog('DOWNLOAD', 'Log downloaded', { filename: a.download });
+    }
+
+    // Run on load
+    window.addEventListener('load', () => {
+      logEnv();
+      logStorage();
+      logAppStatus();
+      addLog('READY', 'Diagnostic page ready');
+    });
+
+    // Log any errors
+    window.addEventListener('error', (event) => {
+      addLog('ERROR', event.message, {
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno
+      });
+    });
+
+    addLog('INIT', 'Diagnostic script loaded');
+  </script>
+</body>
+</html>
