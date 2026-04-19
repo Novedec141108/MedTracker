@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Medicine Tracker 2026</title>
+  <title>Medicine Tracker</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { 
@@ -12,9 +12,9 @@
       color: #000000; 
       padding: 20px; 
     }
-    .container { max-width: 1400px; margin: 0 auto; }
+    .container { max-width: 1600px; margin: 0 auto; }
     h1 { text-align: center; margin-bottom: 30px; }
-    .main { display: grid; grid-template-columns: 250px 280px 1fr; gap: 20px; }
+    .main { display: grid; grid-template-columns: 350px 1fr; gap: 30px; }
     .section { border: 1px solid #ddd; padding: 15px; border-radius: 6px; background: #fafafa; }
     .section h2 { font-size: 18px; margin-bottom: 15px; }
     input, select { width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; }
@@ -26,20 +26,29 @@
     .del-btn { font-size: 12px; padding: 2px 6px; margin-left: 8px; }
     
     /* Calendar */
-    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 15px; }
+    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-top: 15px; }
     .day { 
       border: 1px solid #ccc; 
-      padding: 10px; 
-      min-height: 100px; 
+      padding: 15px; 
+      min-height: 140px; 
       background: #fff; 
       cursor: pointer; 
       border-radius: 4px;
       position: relative;
+      font-size: 14px;
     }
     .day:hover { background: #f5f5f5; }
-    .day-num { font-weight: bold; font-size: 16px; margin-bottom: 5px; }
-    .pending-dot { position: absolute; top: 5px; right: 5px; width: 10px; height: 10px; background: #d32f2f; border-radius: 50%; }
+    .day-num { font-weight: bold; font-size: 18px; margin-bottom: 8px; }
+    .pending-dot { position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; background: #d32f2f; border-radius: 50%; }
     .day.taken { background: #e8f5e9; }
+    
+    /* Calendar Controls */
+    .calendar-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+    .calendar-controls select { margin: 0; }
+    
+    /* Combined Section - VERTICAL STACK */
+    .combined-section { display: flex; flex-direction: column; gap: 20px; }
+    .combined-section > div { border: 1px solid #e0e0e0; padding: 12px; border-radius: 4px; background: #ffffff; }
     
     /* Modal */
     .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
@@ -53,44 +62,87 @@
     .med-mark { padding: 4px 8px; background: #2e7d32; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; }
     .med-undo { padding: 4px 8px; background: #b71c1c; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px; }
     .med-time { font-size: 11px; color: #666; }
+
+    /* MOBILE RESPONSIVENESS */
+    @media (max-width: 768px) {
+      .main { grid-template-columns: 1fr; gap: 20px; }
+      #calendar { grid-template-columns: repeat(7, 1fr); gap: 8px; }
+      .day { padding: 10px; min-height: 80px; font-size: 12px; }
+      .day-num { font-size: 14px; }
+      .calendar-controls { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 24px; margin-bottom: 20px; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 10px; }
+      .container { max-width: 100%; }
+      .main { grid-template-columns: 1fr; }
+      .section { padding: 10px; }
+      h1 { font-size: 20px; }
+      input, select, button { padding: 6px; font-size: 14px; }
+      #calendar { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+      .day { padding: 6px; min-height: 60px; font-size: 11px; }
+      .day-num { font-size: 12px; }
+      .pending-dot { width: 8px; height: 8px; top: 4px; right: 4px; }
+      .del-btn { font-size: 10px; padding: 1px 4px; }
+      ul li { padding: 4px; font-size: 13px; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Medicine Tracker (2026)</h1>
+    <h1>Medicine Tracker</h1>
     
     <div class="main">
-      <!-- USERS SECTION -->
+      <!-- USERS & MEDICINES SECTION (LEFT) -->
       <div class="section">
-        <h2>Users (max 4)</h2>
-        <ul id="userList"></ul>
-        <input type="text" id="userName" placeholder="Name" />
-        <input type="email" id="userEmail" placeholder="Email (optional)" />
-        <button onclick="addUser()">Add User</button>
-      </div>
-      
-      <!-- MEDICINES SECTION -->
-      <div class="section">
-        <h2>Medicines</h2>
-        <div id="selectedUser">No user selected</div>
-        <ul id="medList"></ul>
-        <input type="text" id="medName" placeholder="Medicine name" />
-        <select id="medFreq">
-          <option value="daily">Every day</option>
-          <option value="alternate">Alternate day</option>
-          <option value="cycle">Custom cycle</option>
-        </select>
-        <div id="cycleDiv" style="display:none;">
-          <input type="number" id="cycleOn" placeholder="Days on" value="2" style="width:48%;" />
-          <input type="number" id="cycleOff" placeholder="Days off" value="1" style="width:48%; margin-left: 4%;" />
+        <h2>Users & Medicines</h2>
+        
+        <div class="combined-section">
+          <!-- USERS -->
+          <div>
+            <h3 style="font-size: 14px; margin-bottom: 8px;">Users (max 4)</h3>
+            <ul id="userList"></ul>
+            <input type="text" id="userName" placeholder="Name" />
+            <input type="email" id="userEmail" placeholder="Email (optional)" />
+            <button onclick="addUser()" style="width: 100%;">Add User</button>
+          </div>
+          
+          <!-- MEDICINES -->
+          <div>
+            <h3 style="font-size: 14px; margin-bottom: 8px;">Medicines (max 5)</h3>
+            <div id="selectedUser" style="font-size: 12px; margin-bottom: 8px; color: #666;">No user selected</div>
+            <ul id="medList"></ul>
+            <input type="text" id="medName" placeholder="Medicine name" />
+            <select id="medFreq" onchange="toggleCycleInputs()">
+              <option value="daily">Every day</option>
+              <option value="alternate">Alternate day</option>
+              <option value="cycle">Custom cycle</option>
+            </select>
+            <div id="cycleDiv" style="display:none; margin-top: 8px;">
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <div style="flex: 1;">
+                  <label style="font-size: 12px; color: #666;">Days on</label>
+                  <input type="number" id="cycleOn" value="2" min="1" style="width: 100%; margin: 4px 0;" />
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size: 12px; color: #666;">Days off</label>
+                  <input type="number" id="cycleOff" value="1" min="0" style="width: 100%; margin: 4px 0;" />
+                </div>
+              </div>
+            </div>
+            <button onclick="addMedicine()" style="width: 100%;">Add Medicine</button>
+          </div>
         </div>
-        <button onclick="addMedicine()">Add Medicine</button>
       </div>
       
-      <!-- CALENDAR SECTION -->
+      <!-- CALENDAR SECTION (RIGHT) -->
       <div class="section">
         <h2>Calendar</h2>
-        <select id="monthSelect" onchange="changeMonth()"></select>
+        <div class="calendar-controls">
+          <select id="monthSelect" onchange="changeMonth()"></select>
+          <select id="yearSelect" onchange="changeYear()"></select>
+        </div>
         <div id="calendar"></div>
       </div>
     </div>
@@ -107,7 +159,7 @@
 
   <script>
     const STORAGE_KEY = 'med-tracker-data';
-    let state = { users: [], selectedUserId: null, records: {}, month: new Date().getMonth(), year: 2026 };
+    let state = { users: [], selectedUserId: null, records: {}, month: new Date().getMonth(), year: new Date().getFullYear() };
 
     function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     function load() { const d = localStorage.getItem(STORAGE_KEY); if(d) state = JSON.parse(d); }
@@ -220,9 +272,16 @@
     }
 
     // FREQUENCY CHECK
-    function shouldTake(freq, day) {
-      if(freq === 'daily') return true;
-      if(freq === 'alternate') return day % 2 === 1;
+    function shouldTake(med, day) {
+      if(med.freq === 'daily') return true;
+      if(med.freq === 'alternate') return day % 2 === 1;
+      if(med.freq === 'cycle') {
+        const on = med.on || 1;
+        const off = med.off || 0;
+        const cycle = on + off;
+        const dayInCycle = ((day - 1) % cycle) + 1;
+        return dayInCycle <= on;
+      }
       return true;
     }
 
@@ -265,7 +324,7 @@
         
         state.users.forEach(user => {
           user.meds.forEach(med => {
-            if(shouldTake(med.freq, d)) {
+            if(shouldTake(med, d)) {
               hasMeds = true;
               const rec = state.records[dateStr] && state.records[dateStr][user.id] && state.records[dateStr][user.id][med.id];
               if(!rec) allTaken = false;
@@ -303,7 +362,7 @@
       
       let html = '';
       state.users.forEach(user => {
-        const meds = user.meds.filter(m => shouldTake(m.freq, day));
+        const meds = user.meds.filter(m => shouldTake(m, day));
         if(meds.length === 0) return;
         
         html += `<div class="user-section"><div class="user-name">${user.name}</div>`;
@@ -353,6 +412,17 @@
       renderCalendar();
     }
 
+    function changeYear() {
+      state.year = parseInt(document.getElementById('yearSelect').value);
+      save();
+      renderCalendar();
+    }
+
+    function toggleCycleInputs() {
+      const freq = document.getElementById('medFreq').value;
+      document.getElementById('cycleDiv').style.display = freq === 'cycle' ? 'block' : 'none';
+    }
+
     // RENDER ALL
     function render() {
       renderUsers();
@@ -365,20 +435,25 @@
       load();
       
       // Setup months
-      const sel = document.getElementById('monthSelect');
+      const monthSel = document.getElementById('monthSelect');
       const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
       months.forEach((m, i) => {
         const opt = document.createElement('option');
         opt.value = i;
-        opt.textContent = m + ' 2026';
-        sel.appendChild(opt);
+        opt.textContent = m;
+        monthSel.appendChild(opt);
       });
-      sel.value = state.month;
+      monthSel.value = state.month;
       
-      // Frequency toggle
-      document.getElementById('medFreq').onchange = function() {
-        document.getElementById('cycleDiv').style.display = this.value === 'cycle' ? 'block' : 'none';
-      };
+      // Setup years (2024-2030)
+      const yearSel = document.getElementById('yearSelect');
+      for(let y = 2024; y <= 2030; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSel.appendChild(opt);
+      }
+      yearSel.value = state.year;
       
       // Close modal on background click
       document.getElementById('modal').onclick = function(e) {
