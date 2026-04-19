@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Medicine Tracker TEST</title>
+  <style>
+    * {box-sizing: border-box;}
+    body {margin: 0; padding: 20px; font-family: Arial; background: #fff; color: #000;}
+    .container {max-width: 1400px; margin: 0 auto;}
+    h1 {text-align: center;}
+    #calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin-top: 20px;
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .day {
+      border: 1px solid #ccc;
+      padding: 10px;
+      min-height: 100px;
+      background: #fff;
+      border-radius: 4px;
+    }
+    .date {font-weight: bold; font-size: 16px;}
+    .day.hasPending {position: relative;}
+    .pending-dot {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 10px;
+      height: 10px;
+      background: #d32f2f;
+      border-radius: 50%;
+    }
+    .day.takenDay {background: #e8f5e9;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Medicine Tracker - Calendar Test</h1>
+    <p>This is a test version to check if the calendar renders.</p>
+    <div id="calendar"></div>
+  </div>
+
+  <script>
+    console.log("TEST: Script starting");
+    
+    // Simple calendar generation
+    function renderTestCalendar() {
+      console.log("TEST: renderTestCalendar called");
+      const calendar = document.getElementById('calendar');
+      if (!calendar) {
+        console.error("TEST: Calendar element not found!");
+        return;
+      }
+      
+      const year = 2026;
+      const month = 3; // April (0-based, so 3 = April)
+      
+      // Weekday headers
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      dayNames.forEach(name => {
+        const h = document.createElement('div');
+        h.style.fontWeight = 'bold';
+        h.style.textAlign = 'center';
+        h.style.padding = '8px';
+        h.style.background = '#f0f0f0';
+        h.textContent = name;
+        calendar.appendChild(h);
+      });
+      
+      // Get first day of month and total days
+      const firstDay = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      
+      console.log("TEST: Year=" + year + ", Month=" + month + ", FirstDay=" + firstDay + ", TotalDays=" + totalDays);
+      
+      // Empty cells before month starts
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.style.background = '#fafafa';
+        calendar.appendChild(empty);
+      }
+      
+      // Calendar days
+      for (let day = 1; day <= totalDays; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'day';
+        
+        // Add date number
+        const dateNum = document.createElement('div');
+        dateNum.className = 'date';
+        dateNum.textContent = day;
+        cell.appendChild(dateNum);
+        
+        // Add red dot for testing on certain days (e.g., days with medicines to take)
+        if (day % 3 === 0) { // Every 3rd day
+          cell.classList.add('hasPending');
+          const dot = document.createElement('div');
+          dot.className = 'pending-dot';
+          cell.appendChild(dot);
+        }
+        
+        // Add green for testing (e.g., days all medicines taken)
+        if (day % 5 === 0) {
+          cell.classList.add('takenDay');
+        }
+        
+        calendar.appendChild(cell);
+      }
+      
+      console.log("TEST: Calendar rendered with " + totalDays + " days");
+    }
+    
+    // Run when page loads
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', renderTestCalendar);
+    } else {
+      renderTestCalendar();
+    }
+  </script>
+</body>
+</html>

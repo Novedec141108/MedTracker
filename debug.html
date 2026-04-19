@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Medicine Tracker - Debug</title>
+</head>
+<body>
+  <h1>Medicine Tracker - Debug Check</h1>
+  <p id="status">Checking...</p>
+  <hr>
+  <h2>Files Status:</h2>
+  <ul>
+    <li>app.js: <span id="jsStatus">?</span></li>
+    <li>app.css: <span id="cssStatus">?</span></li>
+  </ul>
+  <hr>
+  <h2>DOM Elements:</h2>
+  <ul>
+    <li id="userList">userList: <span id="userListStatus">?</span></li>
+    <li id="calendar">calendar: <span id="calendarStatus">?</span></li>
+    <li id="dateModal">dateModal: <span id="dateModalStatus">?</span></li>
+  </ul>
+  <hr>
+  <h2>Try Loading:</h2>
+  <p><a href="index.html" target="_blank">Open Medicine Tracker App</a></p>
+  
+  <script>
+    document.getElementById('userListStatus').textContent = document.getElementById('userList') ? '✓' : '✗';
+    document.getElementById('calendarStatus').textContent = document.getElementById('calendar') ? '✓' : '✗';
+    document.getElementById('dateModalStatus').textContent = document.getElementById('dateModal') ? '✓' : '✗';
+    document.getElementById('jsStatus').textContent = 'Loading...';
+    document.getElementById('cssStatus').textContent = 'Loaded';
+  </script>
+</body>
+</html>

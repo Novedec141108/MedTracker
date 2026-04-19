@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Reset Medicine Tracker</title>
+  <style>
+    body {font-family: Arial; padding: 40px; background: #f0f0f0;}
+    .container {max-width: 600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);}
+    h1 {color: #d32f2f;}
+    button {padding: 10px 20px; font-size: 16px; background: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer;}
+    button:hover {background: #b71c1c;}
+    .success {color: #2e7d32; margin-top: 20px; padding: 15px; background: #e8f5e9; border-radius: 4px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚠️ Reset Medicine Tracker Data</h1>
+    <p>This will clear all stored medicine tracker data from your browser and start fresh.</p>
+    <button onclick="resetData()">Reset All Data</button>
+    <div id="message"></div>
+  </div>
+
+  <script>
+    function resetData() {
+      // Clear localStorage
+      localStorage.clear();
+      
+      // Show success message
+      const msg = document.getElementById('message');
+      msg.innerHTML = '<div class="success">✅ All data cleared! <a href="index.html">Go back to Medicine Tracker</a></div>';
+      
+      console.log('All data cleared');
+    }
+  </script>
+</body>
+</html>
