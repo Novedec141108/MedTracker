@@ -120,6 +120,10 @@
 
     // Test fetch
     function testFetch() {
+      if (window.location.protocol === 'file:') {
+        addLog('TEST_SKIP', 'Cannot fetch from file:// protocol - test skipped');
+        return;
+      }
       addLog('TEST', 'Testing fetch to current origin');
       fetch(window.location.origin)
         .then(r => r.text())
@@ -129,13 +133,17 @@
 
     // App status
     function logAppStatus() {
+      const isMainApp = window.location.pathname.includes('index.html') || window.location.pathname === '/';
       const status = {
+        currentPage: window.location.pathname,
+        isMainApp: isMainApp,
         DOMarker_userList: !!document.getElementById('userList'),
         DOMarker_calendar: !!document.getElementById('calendar'),
         DOMarker_modal: !!document.getElementById('modal'),
         functionArker_addUser: typeof window.addUser === 'function',
         functionArker_renderCalendar: typeof window.renderCalendar === 'function',
         localStorageAvailable: (() => { try { localStorage.setItem('test', 'test'); localStorage.removeItem('test'); return true; } catch { return false; } })(),
+        note: isMainApp ? 'All systems nominal' : 'This is diagnostic.html - load index.html to check app elements',
         timestamp: new Date().toISOString()
       };
       document.getElementById('appStatus').textContent = JSON.stringify(status, null, 2);
