@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Medicine Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #ffffff; 
+      color: #000000; 
+      padding: 20px; 
+    }
+    .container { max-width: 1600px; margin: 0 auto; }
+    h1 { text-align: center; margin-bottom: 30px; }
+    .main { display: grid; grid-template-columns: 350px 1fr; gap: 30px; }
+    .section { border: 1px solid #ddd; padding: 15px; border-radius: 6px; background: #fafafa; }
+    .section h2 { font-size: 18px; margin-bottom: 15px; }
+    input, select { width: 100%; padding: 8px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; }
+    button { padding: 8px 12px; margin: 4px 0; background: #f0f0f0; border: 1px solid #999; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #e0e0e0; }
+    ul { list-style: none; padding: 0; }
+    li { padding: 6px; margin: 4px 0; }
+    li.selected { background: #e3f2fd; border-radius: 4px; font-weight: bold; }
+    .del-btn { font-size: 12px; padding: 2px 6px; margin-left: 8px; }
+    
+    /* Calendar */
+    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; margin-top: 15px; }
+    .day { 
+      border: 1px solid #ccc; 
+      padding: 15px; 
+      min-height: 140px; 
+      background: #fff; 
+      cursor: pointer; 
+      border-radius: 4px;
+      position: relative;
+      font-size: 14px;
+    }
+    .day:hover { background: #f5f5f5; }
+    .day-num { font-weight: bold; font-size: 18px; margin-bottom: 8px; }
+    .pending-dot { position: absolute; top: 8px; right: 8px; width: 12px; height: 12px; background: #d32f2f; border-radius: 50%; }
+    .day.taken { background: #e8f5e9; }
+    
+    /* Calendar Controls */
+    .calendar-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+    .calendar-controls select { margin: 0; }
+    
+    /* Combined Section - VERTICAL STACK */
+    .combined-section { display: flex; flex-direction: column; gap: 20px; }
+    .combined-section > div { border: 1px solid #e0e0e0; padding: 12px; border-radius: 4px; background: #ffffff; }
+    
+    /* Modal */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal.open { display: flex; }
+    .modal-box { background: white; padding: 20px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
+    .modal-close { float: right; font-size: 24px; cursor: pointer; }
+    .modal-close:hover { color: red; }
+    .user-section { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+    .user-name { font-weight: bold; color: #2e7d32; margin-bottom: 10px; }
+    .med-item { padding: 8px; background: #f5f5f5; border-radius: 4px; margin: 5px 0; display: flex; justify-content: space-between; align-items: center; }
+    .med-mark { padding: 4px 8px; background: #2e7d32; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; }
+    .med-undo { padding: 4px 8px; background: #b71c1c; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 12px; margin-left: 5px; }
+    .med-time { font-size: 11px; color: #666; }
+
+    /* MOBILE RESPONSIVENESS */
+    @media (max-width: 768px) {
+      .main { grid-template-columns: 1fr; gap: 20px; }
+      #calendar { grid-template-columns: repeat(7, 1fr); gap: 8px; }
+      .day { padding: 10px; min-height: 80px; font-size: 12px; }
+      .day-num { font-size: 14px; }
+      .calendar-controls { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 24px; margin-bottom: 20px; }
+    }
+
+    @media (max-width: 480px) {
+      body { padding: 10px; }
+      .container { max-width: 100%; }
+      .main { grid-template-columns: 1fr; }
+      .section { padding: 10px; }
+      h1 { font-size: 20px; }
+      input, select, button { padding: 6px; font-size: 14px; }
+      #calendar { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+      .day { padding: 6px; min-height: 60px; font-size: 11px; }
+      .day-num { font-size: 12px; }
+      .pending-dot { width: 8px; height: 8px; top: 4px; right: 4px; }
+      .del-btn { font-size: 10px; padding: 1px 4px; }
+      ul li { padding: 4px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Medicine Tracker</h1>
+    
+    <div class="main">
+      <!-- USERS & MEDICINES SECTION (LEFT) -->
+      <div class="section">
+        <h2>Users & Medicines</h2>
+        
+        <div class="combined-section">
+          <!-- USERS -->
+          <div>
+            <h3 style="font-size: 14px; margin-bottom: 8px;">Users (max 4)</h3>
+            <ul id="userList"></ul>
+            <input type="text" id="userName" placeholder="Name" />
+            <input type="email" id="userEmail" placeholder="Email (optional)" />
+            <button onclick="addUser()" style="width: 100%;">Add User</button>
+          </div>
+          
+          <!-- MEDICINES -->
+          <div>
+            <h3 style="font-size: 14px; margin-bottom: 8px;">Medicines (max 5)</h3>
+            <div id="selectedUser" style="font-size: 12px; margin-bottom: 8px; color: #666;">No user selected</div>
+            <ul id="medList"></ul>
+            <input type="text" id="medName" placeholder="Medicine name" />
+            <select id="medFreq" onchange="toggleCycleInputs()">
+              <option value="daily">Every day</option>
+              <option value="alternate">Alternate day</option>
+              <option value="cycle">Custom cycle</option>
+            </select>
+            <div id="cycleDiv" style="display:none; margin-top: 8px;">
+              <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <div style="flex: 1;">
+                  <label style="font-size: 12px; color: #666;">Days on</label>
+                  <input type="number" id="cycleOn" value="2" min="1" style="width: 100%; margin: 4px 0;" />
+                </div>
+                <div style="flex: 1;">
+                  <label style="font-size: 12px; color: #666;">Days off</label>
+                  <input type="number" id="cycleOff" value="1" min="0" style="width: 100%; margin: 4px 0;" />
+                </div>
+              </div>
+            </div>
+            <button onclick="addMedicine()" style="width: 100%;">Add Medicine</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- CALENDAR SECTION (RIGHT) -->
+      <div class="section">
+        <h2>Calendar</h2>
+        <div class="calendar-controls">
+          <select id="monthSelect" onchange="changeMonth()"></select>
+          <select id="yearSelect" onchange="changeYear()"></select>
+        </div>
+        <div id="calendar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal" class="modal">
+    <div class="modal-box">
+      <span class="modal-close" onclick="closeModal()">&times;</span>
+      <h2 id="modalDate"></h2>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'med-tracker-data';
+    let state = { users: [], selectedUserId: null, records: {}, month: new Date().getMonth(), year: new Date().getFullYear() };
+
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    function load() { const d = localStorage.getItem(STORAGE_KEY); if(d) state = JSON.parse(d); }
+    function uid() { return 'id_' + Math.random().toString(36).substr(2, 9); }
+
+    // ADD USER
+    function addUser() {
+      const name = document.getElementById('userName').value.trim();
+      const email = document.getElementById('userEmail').value.trim();
+      if(!name) return alert('Enter name');
+      if(state.users.length >= 4) return alert('Max 4 users');
+      if(email && !email.includes('@')) return alert('Invalid email');
+      
+      state.users.push({ id: uid(), name, email, meds: [] });
+      document.getElementById('userName').value = '';
+      document.getElementById('userEmail').value = '';
+      save();
+      render();
+    }
+
+    // ADD MEDICINE
+    function addMedicine() {
+      if(!state.selectedUserId) return alert('Select a user first');
+      const user = state.users.find(u => u.id === state.selectedUserId);
+      if(!user) return;
+      if(user.meds.length >= 5) return alert('Max 5 medicines');
+      
+      const name = document.getElementById('medName').value.trim();
+      if(!name) return alert('Enter medicine name');
+      
+      const freq = document.getElementById('medFreq').value;
+      const medObj = { id: uid(), name, freq };
+      if(freq === 'cycle') {
+        medObj.on = parseInt(document.getElementById('cycleOn').value) || 1;
+        medObj.off = parseInt(document.getElementById('cycleOff').value) || 0;
+      }
+      
+      user.meds.push(medObj);
+      document.getElementById('medName').value = '';
+      save();
+      render();
+    }
+
+    // SELECT USER
+    function selectUser(userId) {
+      state.selectedUserId = userId;
+      save();
+      render();
+    }
+
+    // DELETE USER
+    function deleteUser(userId) {
+      if(!confirm('Delete user?')) return;
+      state.users = state.users.filter(u => u.id !== userId);
+      if(state.selectedUserId === userId) state.selectedUserId = null;
+      save();
+      render();
+    }
+
+    // DELETE MEDICINE
+    function deleteMed(medId) {
+      if(!confirm('Delete medicine?')) return;
+      const user = state.users.find(u => u.id === state.selectedUserId);
+      if(user) user.meds = user.meds.filter(m => m.id !== medId);
+      save();
+      render();
+    }
+
+    // RENDER USERS
+    function renderUsers() {
+      const ul = document.getElementById('userList');
+      ul.innerHTML = '';
+      state.users.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = user.name + (user.email ? ` (${user.email})` : '');
+        li.className = user.id === state.selectedUserId ? 'selected' : '';
+        li.style.cursor = 'pointer';
+        li.onclick = () => selectUser(user.id);
+        
+        const del = document.createElement('button');
+        del.textContent = 'Del';
+        del.className = 'del-btn';
+        del.onclick = (e) => { e.stopPropagation(); deleteUser(user.id); };
+        li.appendChild(del);
+        ul.appendChild(li);
+      });
+    }
+
+    // RENDER MEDICINES
+    function renderMeds() {
+      const user = state.users.find(u => u.id === state.selectedUserId);
+      document.getElementById('selectedUser').textContent = user ? `Selected: ${user.name}` : 'No user selected';
+      
+      const ul = document.getElementById('medList');
+      ul.innerHTML = '';
+      if(!user) return;
+      
+      user.meds.forEach(med => {
+        const li = document.createElement('li');
+        const freq = med.freq === 'daily' ? 'Daily' : med.freq === 'alternate' ? 'Alternate' : `Cycle ${med.on}/${med.off}`;
+        li.textContent = med.name + ` [${freq}]`;
+        
+        const del = document.createElement('button');
+        del.textContent = 'Del';
+        del.className = 'del-btn';
+        del.onclick = () => deleteMed(med.id);
+        li.appendChild(del);
+        ul.appendChild(li);
+      });
+    }
+
+    // FREQUENCY CHECK
+    function shouldTake(med, day) {
+      if(med.freq === 'daily') return true;
+      if(med.freq === 'alternate') return day % 2 === 1;
+      if(med.freq === 'cycle') {
+        const on = med.on || 1;
+        const off = med.off || 0;
+        const cycle = on + off;
+        const dayInCycle = ((day - 1) % cycle) + 1;
+        return dayInCycle <= on;
+      }
+      return true;
+    }
+
+    // RENDER CALENDAR
+    function renderCalendar() {
+      const cal = document.getElementById('calendar');
+      cal.innerHTML = '';
+      
+      const year = state.year;
+      const month = state.month;
+      const firstDay = new Date(year, month, 1).getDay();
+      const days = new Date(year, month + 1, 0).getDate();
+      
+      // Weekday headers
+      ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+        const h = document.createElement('div');
+        h.style.fontWeight = 'bold';
+        h.style.textAlign = 'center';
+        h.style.padding = '8px';
+        h.style.background = '#f0f0f0';
+        h.textContent = day;
+        cal.appendChild(h);
+      });
+      
+      // Empty cells
+      for(let i = 0; i < firstDay; i++) {
+        cal.appendChild(document.createElement('div'));
+      }
+      
+      // Days
+      for(let d = 1; d <= days; d++) {
+        const dayEl = document.createElement('div');
+        dayEl.className = 'day';
+        
+        const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        
+        // Check if medicines to take
+        let hasMeds = false;
+        let allTaken = true;
+        
+        state.users.forEach(user => {
+          user.meds.forEach(med => {
+            if(shouldTake(med, d)) {
+              hasMeds = true;
+              const rec = state.records[dateStr] && state.records[dateStr][user.id] && state.records[dateStr][user.id][med.id];
+              if(!rec) allTaken = false;
+            }
+          });
+        });
+        
+        // Red dot for pending
+        if(hasMeds && !allTaken) {
+          const dot = document.createElement('div');
+          dot.className = 'pending-dot';
+          dayEl.appendChild(dot);
+        }
+        
+        // Green if all taken
+        if(hasMeds && allTaken) dayEl.classList.add('taken');
+        
+        // Date number
+        const num = document.createElement('div');
+        num.className = 'day-num';
+        num.textContent = d;
+        dayEl.appendChild(num);
+        
+        // Click to open modal
+        dayEl.onclick = () => openModal(dateStr);
+        
+        cal.appendChild(dayEl);
+      }
+    }
+
+    // MODAL
+    function openModal(dateStr) {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      document.getElementById('modalDate').textContent = `Mark Medicines - ${dateStr}`;
+      
+      let html = '';
+      state.users.forEach(user => {
+        const meds = user.meds.filter(m => shouldTake(m, day));
+        if(meds.length === 0) return;
+        
+        html += `<div class="user-section"><div class="user-name">${user.name}</div>`;
+        meds.forEach(med => {
+          const rec = state.records[dateStr] && state.records[dateStr][user.id] && state.records[dateStr][user.id][med.id];
+          if(rec) {
+            const time = new Date(rec.ts).toLocaleTimeString();
+            html += `<div class="med-item"><span>${med.name}<br><span class="med-time">at ${time}</span></span><button class="med-undo" onclick="undoMed('${dateStr}','${user.id}','${med.id}')">Undo</button></div>`;
+          } else {
+            html += `<div class="med-item"><span>${med.name}</span><button class="med-mark" onclick="markMed('${dateStr}','${user.id}','${med.id}')">Mark</button></div>`;
+          }
+        });
+        html += '</div>';
+      });
+      
+      document.getElementById('modalContent').innerHTML = html || '<p>No medicines scheduled</p>';
+      document.getElementById('modal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+    }
+
+    function markMed(dateStr, userId, medId) {
+      if(!state.records[dateStr]) state.records[dateStr] = {};
+      if(!state.records[dateStr][userId]) state.records[dateStr][userId] = {};
+      state.records[dateStr][userId][medId] = { ts: new Date().toISOString() };
+      save();
+      renderCalendar();
+      openModal(dateStr);
+    }
+
+    function undoMed(dateStr, userId, medId) {
+      if(state.records[dateStr] && state.records[dateStr][userId]) {
+        delete state.records[dateStr][userId][medId];
+        if(Object.keys(state.records[dateStr][userId]).length === 0) delete state.records[dateStr][userId];
+        if(Object.keys(state.records[dateStr]).length === 0) delete state.records[dateStr];
+      }
+      save();
+      renderCalendar();
+      openModal(dateStr);
+    }
+
+    function changeMonth() {
+      state.month = parseInt(document.getElementById('monthSelect').value);
+      save();
+      renderCalendar();
+    }
+
+    function changeYear() {
+      state.year = parseInt(document.getElementById('yearSelect').value);
+      save();
+      renderCalendar();
+    }
+
+    function toggleCycleInputs() {
+      const freq = document.getElementById('medFreq').value;
+      document.getElementById('cycleDiv').style.display = freq === 'cycle' ? 'block' : 'none';
+    }
+
+    // RENDER ALL
+    function render() {
+      renderUsers();
+      renderMeds();
+      renderCalendar();
+    }
+
+    // INIT
+    function init() {
+      load();
+      
+      // Setup months
+      const monthSel = document.getElementById('monthSelect');
+      const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      months.forEach((m, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = m;
+        monthSel.appendChild(opt);
+      });
+      monthSel.value = state.month;
+      
+      // Setup years (2024-2030)
+      const yearSel = document.getElementById('yearSelect');
+      for(let y = 2024; y <= 2030; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSel.appendChild(opt);
+      }
+      yearSel.value = state.year;
+      
+      // Close modal on background click
+      document.getElementById('modal').onclick = function(e) {
+        if(e.target === this) closeModal();
+      };
+      
+      render();
+    }
+
+    // Start when DOM is ready
+    if(document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>

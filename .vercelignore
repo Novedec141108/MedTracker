@@ -1,0 +1,11 @@
+.git
+.gitignore
+node_modules
+*.md
+tracking-data.json
+.DS_Store
+*.pyc
+__pycache__
+email_reminder.py
+server.js
+package.json
